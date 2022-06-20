@@ -75,7 +75,7 @@ number of words*/
 "\n" {printf("%d\n", i); i = 0;}
 %%
 
-intyywrap(void){}
+int yywrap(void){}
 
 int main()
 {   
@@ -88,13 +88,10 @@ return 0;
 
 # Calculator using lex
 ```
-/*lex program to implement
-		- a simple calculator.*/
-
-% {
+%{
   int op = 0,i;
   float a, b;
-% }
+%}
 
 dig [0-9]+|([0-9]*)"."([0-9]+)
 add "+"
@@ -103,9 +100,8 @@ mul "*"
 div "/"
 pow "^"
 ln \n
-%%
 
-/* digi() is a user defined function */
+%%
 {dig} {digi();}
 {add} {op=1;}
 {sub} {op=2;}
@@ -113,8 +109,8 @@ ln \n
 {div} {op=4;}
 {pow} {op=5;}
 {ln} {printf("\n The Answer :%f\n\n",a);}
-
 %%
+
 digi()
 {
 if(op==0)
