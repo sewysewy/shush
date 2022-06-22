@@ -1778,3 +1778,313 @@ public class AlarmReceiver extends BroadcastReceiver {
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
+# send/receive sms and email
+
+# Activity_main.xml
+```
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".MainActivity">
+
+<TextView
+android:id="@+id/textView1"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="SMS Application"
+android:layout_marginTop="30dp"
+android:layout_centerHorizontal="true"
+android:textSize="30dp" />
+
+<EditText
+android:layout_width="200dp"
+android:layout_height="wrap_content"
+android:id="@+id/editText"
+android:hint="Enter Phone Number"
+android:layout_marginTop="150dp"
+android:layout_marginLeft="50dp"/>
+
+<EditText
+android:layout_width="200dp"
+android:layout_height="wrap_content"
+android:id="@+id/editText2"
+android:hint="Enter SMS"
+android:layout_marginLeft="50dp"
+android:layout_marginTop="250dp"/>
+
+<Button
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="Send SMS"
+android:id="@+id/btnSendSMS"
+android:layout_marginTop="350dp"
+android:layout_centerHorizontal="true" />
+</RelativeLayout>
+```
+# activity_sms_receiver.xml
+```
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent">
+<TextView
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginTop="180dp"
+android:layout_marginLeft="50dp"
+android:text=""
+android:id="@+id/receiveSMS"/>
+</RelativeLayout>
+```
+# MainActivity.java
+```
+package com.example.appdev;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.os.Bundle;
+import android.telephony.SmsManager;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+public class MainActivity extends AppCompatActivity {
+EditText txtphoneNo, txtMessage;
+Button sendSMS;
+String phoneNo, message;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_main);
+sendSMS = (Button) findViewById(R.id.btnSendSMS);
+txtphoneNo = (EditText) findViewById(R.id.editText);
+txtMessage = (EditText) findViewById(R.id.editText2);
+sendSMS.setOnClickListener(new View.OnClickListener() {
+@Override
+public void onClick(View view) {
+phoneNo = txtphoneNo.getText().toString();
+message = txtMessage.getText().toString();
+try {
+SmsManager smsManager = SmsManager.getDefault();
+smsManager.sendTextMessage(phoneNo, null, message, null, null);
+Toast.makeText(getApplicationContext(), "SMS sent.",
+Toast.LENGTH_LONG).show();
+Intent smsIntent = new Intent(MainActivity.this, SmsReceiver.class);
+smsIntent.putExtra("address", phoneNo);
+smsIntent.putExtra("sms_body", message);
+//startActivity(smsIntent);
+NotificationManager smsnm = (NotificationManager)
+getSystemService(NOTIFICATION_SERVICE);
+final String CHANNEL_ID = "my_channel_01";
+CharSequence name = "my_notification";
+NotificationChannel smsnc = new NotificationChannel(CHANNEL_ID, name,
+NotificationManager.IMPORTANCE_DEFAULT);
+smsnc.setDescription("New Notification");
+smsnm.createNotificationChannel(smsnc);
+PendingIntent pi = PendingIntent.getActivity(MainActivity.this, 0, smsIntent,
+PendingIntent.FLAG_UPDATE_CURRENT);
+smsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+Intent.FLAG_ACTIVITY_CLEAR_TASK);
+NotificationCompat.Builder builder=new
+NotificationCompat.Builder(MainActivity.this,CHANNEL_ID)
+.setContentTitle("New Message from "+phoneNo)
+.setContentText(message)
+.setSmallIcon(R.mipmap.ic_launcher)
+.setContentIntent(pi)
+
+.setAutoCancel(true);
+smsnm.notify(1,builder.build());
+} catch (Exception e) {
+Toast.makeText(getApplicationContext(),
+"Sending SMS failed.",
+Toast.LENGTH_LONG).show();
+e.printStackTrace();
+}
+}
+});
+}
+}
+```
+# SmsReceiver.java
+```
+package com.example.it17611_expt_12;
+import androidx.appcompat.app.AppCompatActivity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.TextView;
+
+public class SmsReceiver extends AppCompatActivity
+{
+TextView receiveSMS;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_sms_receiver);
+receiveSMS = (TextView)findViewById(R.id.receiveSMS);
+Bundle extras = getIntent().getExtras();
+this.setTitle(extras.getString("address"));
+receiveSMS.setText(extras.getString("sms_body"));
+}
+}
+```
+
+# Text to Speech
+
+# MainActivity.java
+```
+package com.example.appdev;
+
+import androidx.appcompat.app.AppCompatActivity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.Locale;
+public class MainActivity extends AppCompatActivity{
+TextToSpeech tts;
+Button btnTextToSpeech, btnSpeechToText;
+EditText editTextToSpeech;
+TextView viewSpeechToText;
+private final int REQ_CODE = 100;
+@Override
+public void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_main);
+editTextToSpeech = (EditText) findViewById(R.id.editTextToSpeech);
+btnTextToSpeech = (Button) findViewById(R.id.btnTextToSpeech);
+btnSpeechToText = (Button) findViewById(R.id.btnSpeechToText);
+viewSpeechToText = (TextView) findViewById(R.id.viewSpeechToText);
+tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+@Override
+public void onInit(int status) {
+if (status != TextToSpeech.ERROR) {
+tts.setLanguage(Locale.UK);
+}
+}
+});
+btnTextToSpeech.setOnClickListener(new View.OnClickListener() {
+@Override
+public void onClick(View arg0) {
+String toSpeak = editTextToSpeech.getText().toString();
+Toast.makeText(getApplicationContext(), toSpeak, Toast.LENGTH_SHORT).show();
+tts.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+}
+});
+btnSpeechToText.setOnClickListener(new View.OnClickListener() {
+@Override
+public void onClick(View v) {
+Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Need to speak");
+try {
+startActivityForResult(intent, REQ_CODE);
+} catch (ActivityNotFoundException a) {
+Toast.makeText(getApplicationContext(),
+"Sorry! your device not supported",
+Toast.LENGTH_SHORT).show();
+}
+
+}
+});
+}
+public void onPause(){
+if(tts !=null){
+tts.stop();
+tts.shutdown();
+}
+super.onPause();
+}
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+super.onActivityResult(requestCode, resultCode, data);
+switch (requestCode) {
+case REQ_CODE: {
+if (resultCode == RESULT_OK && null != data) {
+ArrayList result = data
+.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+viewSpeechToText.setText("" + result.get(0));
+}
+break;
+}
+}
+}
+}
+```
+# activity_main.xml
+```
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".MainActivity">
+<TextView
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginTop="20dp"
+android:layout_centerHorizontal="true"
+android:text="Text to Speech"
+android:textSize="30dp"
+android:textColor="@color/colorAccent"/>
+<EditText
+android:id="@+id/editTextToSpeech"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginLeft="20dp"
+android:layout_marginTop="100dp"
+android:ems="10"
+android:hint="Enter Text:">
+<requestFocus />
+</EditText>
+
+<Button
+android:id="@+id/btnTextToSpeech"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginLeft="250dp"
+android:layout_marginTop="100dp"
+android:text="Text to Speech" />
+<TextView
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginTop="250dp"
+android:layout_centerHorizontal="true"
+android:text="Speech to Text"
+android:textSize="30dp"
+android:textColor="@color/colorAccent"/>
+<Button
+android:id="@+id/btnSpeechToText"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginLeft="20dp"
+android:layout_marginTop="350dp"
+android:text="Speech to Text" />
+<TextView
+android:id="@+id/viewSpeechToText"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:layout_marginLeft="200dp"
+android:layout_marginTop="360dp"
+android:text=""
+android:ems="10"/>
+</RelativeLayout>
+```
